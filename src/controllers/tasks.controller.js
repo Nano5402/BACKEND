@@ -67,6 +67,7 @@ const deleteTask = async (req, res) => {
   }
 };
 
+// --- TUS ENDPOINTS DE ASIGNACIÓN MÚLTIPLE ---
 const assignTaskToUsers = async (req, res) => {
   const { taskId } = req.params;
   const { userIds } = req.body; 
@@ -132,7 +133,52 @@ const removeUserFromTask = async (req, res) => {
   }
 };
 
+// --- REQUERIMIENTOS DE FERNANDO ---
+const filterTasks = async (req, res) => {
+  try {
+    const { userId, status } = req.query; 
+    
+    const response = await fetch(DB_URL);
+    let tasks = await response.json();
+
+    if (userId) {
+      tasks = tasks.filter(task => task.userIds && task.userIds.includes(String(userId)));
+    }
+    if (status) {
+      tasks = tasks.filter(task => task.status === status);
+    }
+
+    res.status(200).json({ 
+      msn: "Filtro aplicado", 
+      cantidad: tasks.length, 
+      data: tasks 
+    });
+  } catch (error) {
+    res.status(500).json({ msn: "Error interno al filtrar las tareas" });
+  }
+};
+
+const getTasksByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const response = await fetch(DB_URL);
+    const allTasks = await response.json();
+
+    const userTasks = allTasks.filter(task => task.userIds && task.userIds.includes(String(userId)));
+
+    if (userTasks.length === 0) {
+      return res.status(404).json({ msn: "Este usuario no tiene tareas asignadas" });
+    }
+
+    res.status(200).json(userTasks);
+  } catch (error) {
+    res.status(500).json({ msn: "Error al obtener las tareas del usuario" });
+  }
+};
+
 export {
   getTasks, getTaskById, createTask, updateTask, deleteTask,
-  assignTaskToUsers, getTaskUsers, removeUserFromTask
+  assignTaskToUsers, getTaskUsers, removeUserFromTask,
+  filterTasks, getTasksByUser
 };
