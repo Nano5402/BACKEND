@@ -1,8 +1,13 @@
--- Script de Creación de Base de Datos - Sistema de Gestión de Tareas
+CREATE USER IF NOT EXISTS 'nano'@'localhost' IDENTIFIED BY 'admin123';
+
 CREATE DATABASE IF NOT EXISTS taskAppDb;
+
+GRANT ALL PRIVILEGES ON taskAppDb.* TO 'nano'@'localhost';
+FLUSH PRIVILEGES;
+
 USE taskAppDb;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -12,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS tasks (
+CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -22,8 +27,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Datos de prueba para validación del Instructor
 INSERT INTO users (name, email, document, role, status) VALUES 
-('Andrés', 'santiagocalvete69@gmail.com', '1097789129', 'admin', 'activo'),
+('Andrés Calvete', 'santiagocalvete69@gmail.com', '1097789129', 'admin', 'activo'),
 ('Isa Pro', 'isa@sena.edu.co', '1098765432', 'admin', 'activo'),
-('Usuario QA', 'qa@sena.edu.co', '123456789', 'user', 'activo');
+('Usuario QA', 'qa@sena.edu.co', '123456789', 'user', 'activo'),
+('Nano', 'nano@sena.edu.co', '12345', 'user', 'activo');
+
