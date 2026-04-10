@@ -5,6 +5,8 @@ import {
   patchTaskStatus, getDashboard
 } from '../controllers/tasks.controller.js';
 import { verifyToken, isAdmin } from '../middlewares/auth.middleware.js';
+import { validateSchema } from '../middlewares/validate.middleware.js';
+import { createTaskSchema } from '../schemas/task.schema.js';
 
 const tasksRouter = express.Router();
 
@@ -14,7 +16,7 @@ tasksRouter.get('/dashboard', verifyToken, isAdmin, getDashboard);
 
 // RUTAS CRUD PRINCIPALES
 tasksRouter.get('/', verifyToken, isAdmin, getTasks); 
-tasksRouter.post('/', verifyToken, isAdmin, createTask);
+tasksRouter.post('/', verifyToken, isAdmin, validateSchema(createTaskSchema), createTask);
 tasksRouter.get('/:id', verifyToken, getTaskById); 
 tasksRouter.put('/:id', verifyToken, isAdmin, updateTask);
 tasksRouter.delete('/:id', verifyToken, isAdmin, deleteTask);
