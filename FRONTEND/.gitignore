@@ -1,0 +1,28 @@
+# Dependencias — no se suben al repositorio
+node_modules/
+
+# Carpeta de producción — se genera con npm run build
+dist/
+
+rutina git.md  
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependencias (NUNCA se suben, pesan demasiado)
+node_modules/
+
+# Producción (Artefactos de construcción)
+dist/
+dist-ssr/
+
+# Variables de entorno (Seguridad)
+.env
+.env.local
+.env.*.local
+
+# Archivos del sistema operativo (Basura)
+.DS_Store
+Thumbs.db

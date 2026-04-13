@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión de Tareas</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <header class="header" id="mainHeader">
+      <h1 class="header__title">Gestión de Tareas SENA</h1>
+      <p class="header__subtitle" id="headerSubtitle">Selecciona tu perfil de ingreso</p>
+    </header>
+
+    <section id="view-roles" class="view-section">
+      <div class="login-grid">
+        <div class="card clickable-card card--estudiante" id="btnRolEstudiante">
+          <h2 class="card__title">Soy Estudiante</h2>
+          <p style="text-align:center; color:var(--text-muted);">Consultar mis tareas asignadas</p>
+        </div>
+        <div class="card clickable-card card--profesor" id="btnRolProfesor">
+          <h2 class="card__title">Soy Profesor</h2>
+          <p style="text-align:center; color:var(--text-muted);">Gestión administrativa y asignación</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-login" class="view-section hidden">
+      <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <button id="btnVolverRoles" class="btn btn--secondary btn--sm" style="margin-bottom: 15px;">← Volver</button>
+        <h2 class="card__title" id="loginTitle">Ingreso</h2>
+        <form id="loginForm" class="form" novalidate>
+          <div class="form__group">
+            <label for="documentoInput" class="form__label">Documento de identidad</label>
+            <input type="text" id="documentoInput" class="form__input" placeholder="Ingresa tu documento">
+            <span class="form__error" id="loginError"></span>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full" id="btnSubmitLogin">Entrar</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-dashboard" class="view-section hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="dashboard-title mb-0" id="dashboardTitle" style="font-size:1.5rem;">Mi Panel</h2>
+        <button id="btnCerrarSesion" class="btn btn--danger btn--sm">Cerrar Sesión</button>
+      </div>
+      <div id="resultadoUsuario" class="results-container"></div>
+    </section>
+  </div>
+
+<section id="view-admin-users" class="view-section hidden">
+      <div class="admin-header">
+        <div class="admin-header-titles">
+          <h2 class="dashboard-title mb-0">Gestión de Usuarios</h2>
+          <p style="color: var(--text-muted); margin-top: 5px;">Administra accesos, credenciales y altas del sistema.</p>
+        </div>
+        <div class="admin-header-actions">
+          <button class="btn btn--primary shadow-glow" onclick="crearUsuarioUI()">
+            <span>➕</span> Nuevo Usuario
+          </button>
+          <button id="btnVolverProfesor" class="btn btn--outline">
+            <span>←</span> Volver al Dashboard
+          </button>
+        </div>
+      </div>
+      
+      <div class="admin-table-wrapper">
+        <table class="admin-table" id="tablaUsuariosAdmin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Contacto</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th style="text-align: center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUsuariosAdmin">
+            </tbody>
+        </table>
+      </div>
+    </section>
+
+  <script type="module" src="src/script.js"></script>
+</body>
+
+</html>
