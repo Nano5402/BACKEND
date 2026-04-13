@@ -1,30 +1,32 @@
-export const validateSchema = (schema) => {
+export const validateSchema = (schema, target = 'body') => {
   return (req, res, next) => {
-    const result = schema.safeParse(req.body);
+    // Valida dinámicamente según el objetivo (body o query)
+    const result = schema.safeParse(req[target]);
 
     if (!result.success) {
       const structuredErrors = result.error.issues.map((issue) => {
         let finalMessage = issue.message;
 
-        // Traducción amigable si Zod detecta un campo faltante
         if (finalMessage.includes("received undefined")) {
           finalMessage = "Este campo es obligatorio";
         }
 
         return {
-          field: issue.path.length > 0 ? issue.path[0] : "body",
+          field: issue.path.length > 0 ? issue.path[0] : target,
           message: finalMessage,
         };
       });
 
-      const validationError = new Error("Error de validación en los datos enviados");
-      validationError.statusCode = 400;
-      validationError.errors = structuredErrors;
-
-      return next(validationError);
+      // RESPUESTA DIRECTA (Cortamos el flujo aquí con un 400 limpio)
+      return res.status(400).json({
+        success: false,
+        message: `Error de validación en: ${target}`,
+        errors: structuredErrors
+      });
     }
 
-    req.body = result.data;
+    // Inyectamos los datos ya validados y limpios
+    req[target] = result.data;
     next();
   };
 };
