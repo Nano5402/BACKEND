@@ -9,6 +9,6 @@ export const loginSchema = z.object({
   password: z.string({
     required_error: "La contraseña es obligatoria",
     invalid_type_error: "La contraseña debe ser un texto",
-  }).min(6, "La contraseña debe tener al menos 6 caracteres"),
+  }).min(4, "La contraseña debe tener al menos 4 caracteres"), // 🔥 Ajustado a 4 para los pines temporales
   
 }).strict("No se permiten campos adicionales en el inicio de sesión");
