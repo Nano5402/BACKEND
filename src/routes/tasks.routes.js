@@ -4,31 +4,30 @@ import {
   assignTaskToUsers, getTaskUsers, removeUserFromTask, filterTasks,
   patchTaskStatus, getDashboard
 } from '../controllers/tasks.controller.js';
-import { verifyToken, isAdmin } from '../middlewares/auth.middleware.js';
+import { verifyToken, checkPermission } from '../middlewares/auth.middleware.js'; //  Importamos el Guardián
 import { validateSchema } from '../middlewares/validate.middleware.js';
-// CORRECCIÓN: Se importan ambos esquemas
 import { createTaskSchema, updateTaskSchema, assignTaskSchema, filterTaskQuerySchema } from '../schemas/task.schema.js'; 
+import { PERMISSIONS } from '../constants/permissions.js'; //  Importamos las constantes
 
 const tasksRouter = express.Router();
 
-// RUTAS ESPECÍFICAS (Deben ir arriba)
-tasksRouter.get('/filter', verifyToken, isAdmin, validateSchema(filterTaskQuerySchema, 'query'), filterTasks);
-tasksRouter.get('/dashboard', verifyToken, isAdmin, getDashboard);
+// RUTAS ESPECÍFICAS
+tasksRouter.get('/filter', verifyToken, checkPermission(PERMISSIONS.TASKS_READ_ALL), validateSchema(filterTaskQuerySchema, 'query'), filterTasks);
+tasksRouter.get('/dashboard', verifyToken, checkPermission(PERMISSIONS.TASKS_READ_ALL), getDashboard);
 
 // RUTAS CRUD PRINCIPALES
-tasksRouter.get('/', verifyToken, isAdmin, getTasks); 
-tasksRouter.post('/', verifyToken, isAdmin, validateSchema(createTaskSchema), createTask);
-tasksRouter.get('/:id', verifyToken, getTaskById); 
-// CORRECCIÓN: Se inyecta el middleware en el PUT
-tasksRouter.put('/:id', verifyToken, isAdmin, validateSchema(updateTaskSchema), updateTask);
-tasksRouter.delete('/:id', verifyToken, isAdmin, deleteTask);
+tasksRouter.get('/', verifyToken, checkPermission(PERMISSIONS.TASKS_READ_ALL), getTasks); 
+tasksRouter.post('/', verifyToken, checkPermission(PERMISSIONS.TASKS_CREATE_MULTIPLE), validateSchema(createTaskSchema), createTask);
+tasksRouter.get('/:id', verifyToken, getTaskById); // El controlador decide si es propia o general
+tasksRouter.put('/:id', verifyToken, checkPermission(PERMISSIONS.TASKS_UPDATE_ALL), validateSchema(updateTaskSchema), updateTask);
+tasksRouter.delete('/:id', verifyToken, checkPermission(PERMISSIONS.TASKS_DELETE_ALL), deleteTask);
 
-// RUTA DE ESTADO 
+// RUTA DE ESTADO (Cualquier usuario logueado con la tarea asignada puede intentar parchear)
 tasksRouter.patch('/:id/status', verifyToken, patchTaskStatus);
 
 // RUTAS DE ASIGNACIÓN 
-tasksRouter.post('/:taskId/assign', verifyToken, isAdmin, validateSchema(assignTaskSchema), assignTaskToUsers);
-tasksRouter.get('/:taskId/users', verifyToken, isAdmin, getTaskUsers);
-tasksRouter.delete('/:taskId/users/:userId', verifyToken, isAdmin, removeUserFromTask);
+tasksRouter.post('/:taskId/assign', verifyToken, checkPermission(PERMISSIONS.TASKS_CREATE_MULTIPLE), validateSchema(assignTaskSchema), assignTaskToUsers);
+tasksRouter.get('/:taskId/users', verifyToken, checkPermission(PERMISSIONS.TASKS_READ_ALL), getTaskUsers);
+tasksRouter.delete('/:taskId/users/:userId', verifyToken, checkPermission(PERMISSIONS.TASKS_UPDATE_ALL), removeUserFromTask);
 
 export default tasksRouter;
