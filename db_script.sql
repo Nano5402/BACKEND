@@ -73,14 +73,14 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES (3, 9), (3, 10);
 INSERT INTO users (name, email, document, password, role_id) VALUES 
 ('Andrés Santiago Calvete Lesmes', 'santiagocalvete69@gmail.com', '1097789129', '9129', 1),
 ('John Becerra', 'john.becerra@sena.edu.co', '1095000001', '0001', 2),
-('Ana Isabella García Rozo', 'ana.garcia@sena.edu.co', '1098765432', '5432', 3),
+('Ana Isabella', 'ana.i@sena.edu.co', '1098765432', '5432', 3),
 ('Karol Nicolle', 'karol.n@sena.edu.co', '1095000002', '0002', 3),
 ('Jhon Bueno', 'jhon.bueno@sena.edu.co', '1095000003', '0003', 3),
 ('Dario Herrera', 'dario.h@sena.edu.co', '1095000004', '0004', 3),
 ('Paulo Pacheco', 'paulo.p@sena.edu.co', '1095000005', '0005', 3),
-('Mario Alfonso', 'mario.a@sena.edu.co', '1095000006', '0006', 3),
-('Sergio Andrés', 'sergio.a@sena.edu.co', '1095000007', '0007', 3),
-('Luis Fernando', 'luis.f@sena.edu.co', '1095000008', '0008', 3),
+('Sebastian Patillas', 'sebastian.p@sena.edu.co', '1095000006', '0006', 3),
+('Manuel Serrano', 'manuel.s@sena.edu.co', '1095000007', '0007', 3),
+('Fernando Rodriguez', 'fernando.r@sena.edu.co', '1095000008', '0008', 3),
 ('Carlos Mario', 'carlos.m@sena.edu.co', '1095000009', '0009', 3),
 ('Daniela Valentina', 'daniela.v@sena.edu.co', '1095000010', '0010', 3),
 ('Invitado Auditor', 'auditor@sena.edu.co', '9999999999', '9999', 4);

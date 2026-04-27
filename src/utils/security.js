@@ -12,10 +12,10 @@ export const comparePassword = async (password, hashedPassword) => {
 };
 
 export const generateTokens = (user) => {
-    // 🔥 Ahora el JWT contiene la matriz de seguridad del usuario
+    // Ahora incluimos role_id y los permisos atómicos
     const payload = { 
         id: user.id, 
-        role: user.role_name || user.role, // Soporta la variable antigua o la del nuevo JOIN
+        role: user.role_name || user.role, // Mantenemos el nombre del rol por compatibilidad
         role_id: user.role_id,
         permissions: user.permissions || [] 
     };
