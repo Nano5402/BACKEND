@@ -4,7 +4,6 @@ import 'dotenv/config';
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
-    // 1. Error: Token faltante
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ 
             ok: false, 
@@ -15,47 +14,45 @@ const verifyToken = (req, res, next) => {
     const token = authHeader.split(' ')[1]; 
     
     try {
-        // VERIFICACIÓN REAL: Usamos la llave secreta del .env para desencriptar
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        // Inyectamos los datos del usuario (id y role) en la petición
         req.user = decoded; 
-        
         next(); 
     } catch (error) {
-        // CUMPLIMIENTO DE RÚBRICA: Diferenciar los errores exactos en estricto español
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ 
-                ok: false, 
-                msn: "Acceso denegado. El token ha expirado." 
-            });
+            return res.status(401).json({ ok: false, msn: "Acceso denegado. El token ha expirado." });
         }
-        
         if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({ 
+            return res.status(401).json({ ok: false, msn: "Acceso denegado. Firma de token inválida." });
+        }
+        return res.status(500).json({ ok: false, msn: "Error interno verificando el token." });
+    }
+};
+
+// NUEVO GUARDIÁN RBAC
+const checkPermission = (requiredPermission) => {
+    return (req, res, next) => {
+        // 1. Verificamos que el payload del JWT contenga el array de permisos
+        if (!req.user || !req.user.permissions || !Array.isArray(req.user.permissions)) {
+            return res.status(403).json({ 
                 ok: false, 
-                msn: "Acceso denegado. Firma de token inválida." 
+                msn: "Acceso denegado. La sesión no contiene permisos atómicos válidos." 
             });
         }
 
-        // Error general por si pasa algo más
-        return res.status(500).json({ 
-            ok: false, 
-            msn: "Error interno verificando el token." 
-        });
-    }
+        // 2. Evaluamos si el usuario tiene el permiso exacto
+        const hasPermission = req.user.permissions.includes(requiredPermission);
+
+        if (!hasPermission) {
+            return res.status(403).json({ 
+                ok: false, 
+                msn: `Acceso denegado. Se requiere el permiso: [${requiredPermission}]` 
+            });
+        }
+
+        // 3. Todo en orden, puede pasar al controlador
+        next();
+    };
 };
 
-// Verificación exclusiva para administradores
-const isAdmin = (req, res, next) => {
-    // Verificamos que el rol inyectado sea exactamente 'admin'
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ 
-            ok: false, 
-            msn: "Acceso denegado. Se requieren permisos de administrador." 
-        });
-    }
-    next();
-};
-
-export { verifyToken, isAdmin };
+// Exportamos el nuevo guardián
+export { verifyToken, checkPermission };
