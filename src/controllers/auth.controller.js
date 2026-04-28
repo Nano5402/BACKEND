@@ -2,6 +2,7 @@ import pool from '../config/db.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import { successResponse } from '../utils/response.handler.js';
 import { hashPassword, comparePassword, generateTokens } from '../utils/security.js';
+import { sendOTPEmail } from '../utils/email.js'; // 🔥 NUEVA IMPORTACIÓN
 import jwt from 'jsonwebtoken';
 
 export const register = catchAsync(async (req, res) => {
@@ -142,4 +143,88 @@ export const renewToken = catchAsync(async (req, res) => {
     err.isOperational = true;
     throw err;
   }
+});
+
+// =====================================================================
+// 🔥 NUEVOS MÉTODOS PARA RECUPERACIÓN DE CONTRASEÑA (MAILTRAP + OTP)
+// =====================================================================
+
+export const forgotPassword = catchAsync(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        const error = new Error("El correo es obligatorio");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (users.length === 0) {
+        const error = new Error("No existe un usuario registrado con este correo");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Generar código de 6 dígitos
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Expiración: 30 minutos desde el momento actual (Formato MySQL DATETIME)
+    const expiresAt = new Date(Date.now() + 30 * 60000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await pool.query('UPDATE users SET otp_code = ?, otp_expires_at = ? WHERE email = ?', [otpCode, expiresAt, email]);
+    
+    // Disparamos el correo usando tu utilidad
+    await sendOTPEmail(email, otpCode);
+
+    return successResponse(res, 200, "Código enviado exitosamente al correo.");
+});
+
+export const verifyOTP = catchAsync(async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+        const error = new Error("Faltan datos para la verificación");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const [users] = await pool.query('SELECT otp_code, otp_expires_at FROM users WHERE email = ?', [email]);
+    const user = users[0];
+
+    if (!user || user.otp_code !== otp) {
+        const error = new Error("El código ingresado es incorrecto");
+        error.statusCode = 400;
+        throw error;
+    }
+    
+    if (new Date() > new Date(user.otp_expires_at)) {
+        const error = new Error("El código de seguridad ha expirado");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    return successResponse(res, 200, "Código verificado correctamente.");
+});
+
+export const resetPassword = catchAsync(async (req, res) => {
+    const { email, otp, password } = req.body;
+    if (!email || !otp || !password) {
+        const error = new Error("Faltan datos para el restablecimiento");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Doble validación por seguridad antes de cambiar la clave
+    const [users] = await pool.query('SELECT otp_code, otp_expires_at FROM users WHERE email = ?', [email]);
+    const user = users[0];
+    
+    if (!user || user.otp_code !== otp || new Date() > new Date(user.otp_expires_at)) {
+        const error = new Error("Solicitud inválida o código expirado");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const hashedPassword = await hashPassword(password);
+    
+    // Limpiamos el OTP de la base de datos para que no se pueda reusar
+    await pool.query('UPDATE users SET password = ?, otp_code = NULL, otp_expires_at = NULL WHERE email = ?', [hashedPassword, email]);
+
+    return successResponse(res, 200, "Contraseña restablecida exitosamente.");
 });
