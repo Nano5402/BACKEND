@@ -5,7 +5,6 @@ import { hashPassword, comparePassword, generateTokens } from '../utils/security
 import jwt from 'jsonwebtoken';
 
 export const register = catchAsync(async (req, res) => {
-  // Ahora recibimos role_id en lugar del string role
   const { name, email, document, password, role_id } = req.body;
 
   if (!name || !email || !document || !password) {
@@ -24,9 +23,7 @@ export const register = catchAsync(async (req, res) => {
   }
 
   const hashedPassword = await hashPassword(password);
-  
-  // Por defecto, si no envían rol, le asignamos el 3 (Estudiante)
-  const userRoleId = role_id || 3;
+  const userRoleId = role_id || 3; // 3 = Estudiante por defecto
 
   const [result] = await pool.query(
     'INSERT INTO users (name, email, document, password, role_id) VALUES (?, ?, ?, ?, ?)',
@@ -42,13 +39,13 @@ export const login = catchAsync(async (req, res) => {
   const { document, password } = req.body;
 
   if (!document || !password) {
-    const error = new Error("El documento y la contraseña son obligatorios para iniciar sesión");
+    const error = new Error("El documento y la contraseña son obligatorios");
     error.statusCode = 400;
     error.isOperational = true;
     throw error;
   }
 
-  // 🔥 MAGIA RBAC 1: Traemos al usuario con el nombre de su rol
+  // 1. Buscamos el usuario y hacemos JOIN para traer el nombre de su rol
   const [users] = await pool.query(`
     SELECT u.*, r.name as role_name 
     FROM users u
@@ -80,7 +77,7 @@ export const login = catchAsync(async (req, res) => {
     throw error;
   }
 
-  // 🔥 MAGIA RBAC 2: Extraemos los permisos atómicos desde la tabla pivote
+  // 2. EXTRACCIÓN DE PERMISOS ATÓMICOS DESDE LA TABLA PIVOTE
   const [permissionsData] = await pool.query(`
     SELECT p.name 
     FROM role_permissions rp
@@ -88,14 +85,20 @@ export const login = catchAsync(async (req, res) => {
     WHERE rp.role_id = ?
   `, [user.role_id]);
 
-  // Convertimos el array de objetos a un array de strings planos ['users.create', 'tasks.read.all']
+  // Convertimos el resultado de SQL en un array plano de strings: ['users.create', 'tasks.read.all', ...]
   user.permissions = permissionsData.map(p => p.name);
 
-  // Generamos los tokens incluyendo esta nueva data
+  // 3. Generamos los tokens incluyendo este nuevo array de permisos
   const { accessToken, refreshToken } = generateTokens(user);
 
   return successResponse(res, 200, "Inicio de sesión exitoso", {
-    user: { id: user.id, name: user.name, role: user.role_name, role_id: user.role_id, permissions: user.permissions },
+    user: { 
+      id: user.id, 
+      name: user.name, 
+      role: user.role_name, 
+      role_id: user.role_id, 
+      permissions: user.permissions // Lo enviamos al frontend para que sepa qué botones ocultar
+    },
     accessToken,
     refreshToken
   });
@@ -114,12 +117,12 @@ export const renewToken = catchAsync(async (req, res) => {
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // Generamos un nuevo par de tokens inyectando los datos que ya teníamos decodificados
+    // Mantenemos la integridad de los permisos al renovar el token
     const { accessToken, refreshToken: newRefreshToken } = generateTokens({
       id: decoded.id,
       role_name: decoded.role,
       role_id: decoded.role_id,
-      permissions: decoded.permissions
+      permissions: decoded.permissions // Reinyectamos los permisos decodificados
     });
 
     return successResponse(res, 200, "Token renovado exitosamente", {
